@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "md5.h": "c",
+        "__locale": "c",
+        "chrono": "c",
+        "functional": "c",
+        "llist.h": "c",
+        "message.h": "c",
+        "fstream": "cpp",
+        "locale": "cpp",
+        "*.tcc": "cpp",
+        "file.h": "c",
+        "fapolicyd-backend.h": "c",
+        "conf.h": "c",
+        "*.inc": "c",
+        "md5-backend.h": "c"
+    }
+}
