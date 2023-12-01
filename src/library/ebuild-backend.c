@@ -12,8 +12,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <uthash.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -264,7 +262,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 		msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
 		for (int k = 0; k < sizeof(pkg->content); k++) {
 			ebuildfiles *file = &pkg->content[k];
-			add_file_to_backend(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
+			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
 		}
 	}
 	free(pkgs);

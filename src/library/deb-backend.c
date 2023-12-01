@@ -6,8 +6,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <uthash.h>
@@ -164,7 +162,7 @@ static int deb_load_list(const conf_t *conf) {
                              ? namenode->divert->useinstead->name
                              : namenode->name;
       if (hash != NULL) {
-        add_file_to_backend(path, hash,hashtable_ptr, SRC_DEB, deb_backend);
+        add_file_to_backend_by_md5(path, hash,hashtable_ptr, SRC_DEB, deb_backend);
       }
       file = file->next;
     }

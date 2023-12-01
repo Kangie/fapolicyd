@@ -34,7 +34,7 @@
  * This function would compute a sha256 and file size on the attackers
  * crafted file so they do not secure this backend.
  */
-int add_file_to_backend(const char *path,
+int add_file_to_backend_by_md5(const char *path,
 							struct _hash_record **hashtable,
 							const char *expected_md5,
 							trust_src_t *trust_src,
