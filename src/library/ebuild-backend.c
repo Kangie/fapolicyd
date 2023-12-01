@@ -44,34 +44,12 @@ typedef struct contents {
 	char *path;
 } ebuildfiles;
 
-typedef struct portagecpv {
-		const char *category;
-		const char *name;
-		const char *rev;
-		const char *version;
-} cpv;
-
 struct epkg {
-	struct portagecpv *pkg;
+	char *cpv;
 	char *slot;
 	char *repo;
 	ebuildfiles *content;
 };
-
-/*
- * Take a given portage category/package-version{-rev} string, and pointers to category, package and version variables
- * and split the string using the same rules as portage
- *
- * 1.  If each exists, it returns [cat, pkgname, version, rev]
- * 2.  if rev does not exist it will be '-r0'
- */
-int catpkgsplit(const char *mydata, int silent, cpv *result) {
-	// TODO
-	// split category on '/', validate against category regex and store in result->category
-	// use portage regexes to split package on '-' and store in result->name, result->version, result->rev
-	// maybe just use category directly and only regex the pvr?
-	// https://github.com/gentoo/portage/blob/master/lib/portage/versions.py#L42
-}
 
 /*
  * Portage stores data about installed packages in the VDB (/var/db/pkg/).
@@ -250,27 +228,25 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 									}
 								}
 
-							// Portage stores package names in the format category/package-version{-revision}
-							// e.g. dev-libs/libxml2-2.9.10{-r0}
-							// We need to split this into category, package, version, revision
+							// Construct a CPV string from VDB path fragments e.g. dev-libs/libxml2-2.9.10{-r0}
+							// We're not processing based on this information, but it's useful for logging
+							// If there's a need to split into components see
+							// https://github.com/gentoo/portage-utils/blob/master/libq/atom.c
 							char *catpkgver;
 							strcpy(catdp->d_name, catpkgver);
 							strcat(catpkgver, "/");
 							strcat(catpkgver, pkgverdp->d_name);
 
-							struct portagecpv *cpv;
-
-							split_portage_cpv(catpkgver, &cpv);
-
 							// add to pkgs array
 							struct epkg *package = malloc(sizeof(struct epkg));
-							package->pkg = cpv;
+							package->cpv = catpkgver;
 							package->slot = pkgslot;
 							package->repo = pkgrepo;
 							package->content = pkgcontents;
 							pkgs = realloc(pkgs, sizeof(struct epkg) * (i + 1));
 							pkgs[i] = *package;
 							i++;
+							free(catpkgver);
 							free(package);
 							free(pkgcontents);
 							}
@@ -285,12 +261,13 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 	for (int j = 0; j < i; j++) {
 		struct epkg *pkg = &pkgs[j];
+		msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
 		for (int k = 0; k < sizeof(pkg->content); k++) {
 			ebuildfiles *file = &pkg->content[k];
 			add_file_to_backend(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
 		}
 	}
-
+	free(pkgs);
 	return 0;
 }
 
@@ -303,7 +280,6 @@ static int ebuild_init_backend(void)
 		filter_destroy();
 		return 1;
 	}
-
 
 	list_init(&ebuild_backend.list);
 
