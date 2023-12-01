@@ -91,11 +91,11 @@ AC_ARG_WITH(ebuild,
 AS_HELP_STRING([--with-ebuild],[Use the ebuild database as a trust source]),
 use_ebuild=$withval,use_ebuild=no)
 
-if test x$use_deb = xyes ; then
+if test x$use_ebuild = xyes ; then
     AC_DEFINE(USE_EBUILD,1,[Define if you want to use the ebuild database as trust source.])
     AC_CHECK_LIB(md, MD5Final, , [AC_MSG_ERROR([libmd is missing])], -lmd)
 fi
-AM_CONDITIONAL(WITH_EBUILD, test x$use_deb = xyes)
+AM_CONDITIONAL(WITH_EBUILD, test x$use_ebuild = xyes)
 
 dnl FIXME some day pass this on the command line
 def_systemdsystemunitdir=${prefix}/lib/systemd/system
