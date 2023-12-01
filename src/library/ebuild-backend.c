@@ -259,7 +259,11 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 	for (int j = 0; j < i; j++) {
 		struct epkg *pkg = &pkgs[j];
-		msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
+		if (pkg->slot == "0") {
+			msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
+		} else {
+			msg(LOG_INFO, "Computing hashes for %s (%s)", pkg->cpv, pkg->repo);
+		}
 		for (int k = 0; k < sizeof(pkg->content); k++) {
 			ebuildfiles *file = &pkg->content[k];
 			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
