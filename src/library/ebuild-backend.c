@@ -22,6 +22,8 @@
 #include "message.h"
 #include "md5-backend.h"
 
+#include "filter.h"
+
 static const char kEbuildBackend[] = "ebuilddb";
 
 static int ebuild_init_backend(void);
