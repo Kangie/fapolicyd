@@ -18,7 +18,7 @@
 #include "md5-backend.h"
 
 /*
- * Test file at path and make sure it can be opened; return 0 on success.
+ * Test file at path and make sure it's sane; return 0 on success.
  */
 
 int test_file(const char *path) {
@@ -46,13 +46,12 @@ int test_file(const char *path) {
 }
 
 /*
- * Exclude a known list of paths that shouldn't contain binaries (installed by a package manager, anyway).
+ * Exclude a known list of paths that shouldn't contain binaries
+ * (installed by a package manager, anyway).
  */
-
 int exclude_path(const char *path) {
 	const char *excluded_paths[] = {
-	"/usr/share/doc",
-	"/usr/share/man",
+	"/usr/share/",
 	"/usr/src/",
 	};
 	const int num_excluded_paths = sizeof(excluded_paths) / sizeof(excluded_paths[0]);
