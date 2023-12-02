@@ -279,6 +279,8 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 							msg(LOG_DEBUG, "Package %s\n\tSlot %s\n\tRepo %s\n\tFiles %i", package->cpv, package->slot, package->repo, package->files);
 							free(catpkgver);
+							free(pkgslot);
+							free(pkgrepo);
 							free(package);
 						}
 					}

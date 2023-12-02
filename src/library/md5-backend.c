@@ -18,6 +18,34 @@
 #include "md5-backend.h"
 
 /*
+ * Test file at path and make sure it can be opened; return 0 on success.
+ */
+
+int test_file(const char *path) {
+	struct stat path_stat;
+	int fd = open(path, O_RDONLY|O_NOFOLLOW);
+	if (fd < 0) {
+		if (errno != ELOOP) // Don't report symlinks as a warning
+			msg(LOG_WARNING, "Could not open %si, %s", path, strerror(errno));
+		return 1;
+	}
+
+	if (fstat(fd, &path_stat)) {
+		close(fd);
+		msg(LOG_WARNING, "fstat file %s failed %s", path, strerror(errno));
+		return 1;
+	}
+
+	// If its not a regular file, skip.
+	if (!S_ISREG(path_stat.st_mode)) {
+		close(fd);
+		msg(LOG_DEBUG, "Not regular file %s", path);
+		return 1;
+	}
+	return 0;
+}
+
+/*
  * Given a path to a file with an expected MD5 digest, add
  * the file to the trust database if it matches.
  *
@@ -40,42 +68,30 @@ int add_file_to_backend_by_md5(const char *path,
 							trust_src_t trust_src,
 							backend *backend)
 {
-	struct stat path_stat;
-	// Open the file and check the md5 hash first.
+
+	msg(LOG_DEBUG, "Adding %s", path);
+	msg(LOG_DEBUG, "\tExpected MD5: %s", expected_md5);
+
+	if (test_file(path)) {
+		return 1;
+	}
 	int fd = open(path, O_RDONLY|O_NOFOLLOW);
-	if (fd < 0) {
-		if (errno != ELOOP) // Don't report symlinks as a warning
-			msg(LOG_WARNING, "Could not open %si, %s", path, strerror(errno));
-		return 1;
-	}
-
-	if (fstat(fd, &path_stat)) {
-		close(fd);
-		msg(LOG_WARNING, "fstat file %s failed %s", path, strerror(errno));
-		return 1;
-	}
-
-	// If its not a regular file, skip.
-	if (!S_ISREG(path_stat.st_mode)) {
-		close(fd);
-		msg(LOG_DEBUG, "Not regular file %s", path);
-		return 1;
-	}
-
+	lseek(fd, 0, SEEK_SET);
 	size_t file_size = lseek(fd, 0, SEEK_END);
 	if (file_size == (size_t)-1) {
 		close(fd);
-		msg(LOG_ERR, "Error seeking the end");
+		msg(LOG_ERR, "Error seeking the end of file %s", path);
 		return 1;
 	}
-	lseek(fd, 0, SEEK_SET);
+
+	msg(LOG_DEBUG, "\tFile size: %zu", file_size);
+
 	char *md5_digest = get_hash_from_fd2(fd, file_size, 0);
 	if (md5_digest == NULL) {
 		close(fd);
 		msg(LOG_ERR, "MD5 digest returned NULL");
 		return 1;
 	}
-
 	if (strcmp(md5_digest, expected_md5) != 0) {
 		msg(LOG_WARNING, "Skipping %s: hash mismatch. Got %s, expected %s",
 				path, md5_digest, expected_md5);
