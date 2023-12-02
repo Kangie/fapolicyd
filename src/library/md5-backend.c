@@ -93,8 +93,10 @@ int add_file_to_backend_by_md5(const char *path,
 	}
 
 	// TODO: Get the backend name tha called us and output that; maybe we're on an insane system that uses portage _and_ deb?
+	#ifdef DEBUG
 	msg(LOG_DEBUG, "Adding %s", path);
 	msg(LOG_DEBUG, "\tExpected MD5: %s", expected_md5);
+	#endif
 
 	if (test_file(path)) {
 		return 1;
@@ -108,7 +110,9 @@ int add_file_to_backend_by_md5(const char *path,
 		return 1;
 	}
 
+	#ifdef DEBUG
 	msg(LOG_DEBUG, "\tFile size: %zu", file_size);
+	#endif
 
 	char *md5_digest = get_hash_from_fd2(fd, file_size, 0);
 	if (md5_digest == NULL) {

@@ -101,7 +101,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 				catdir = NULL;
 			}
 
-			msg(LOG_DEBUG, "Loading category %s", vdbdp->d_name);
+			msg(LOG_INFO, "Loading category %s", vdbdp->d_name);
 
 			if (catdir) {
 				DIR *cat;
@@ -122,7 +122,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							pkgverdir = NULL;
 						}
 
-						msg(LOG_DEBUG, "Loading package %s/%s", vdbdp->d_name, catdp->d_name);
+						msg(LOG_INFO, "Loading package %s/%s", vdbdp->d_name, catdp->d_name);
 						char *pkgrepo = NULL;
 						char *pkgslot = NULL;
 						int pkgfiles = 0;
@@ -140,8 +140,6 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							}
 
 							while ((pkgverdp = readdir(pkgver)) != NULL) {
-
-								//msg(LOG_DEBUG, "Type: %s, Name %s", pkgverdp->d_type, pkgverdp->d_name);
 
 								// SLOT
 								if (pkgverdp->d_type == DT_REG &&
@@ -166,7 +164,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 											pkgslot = strdup(line);
 											remove_newline(pkgslot);
 										}
+										#ifdef DEBUG
 										msg(LOG_DEBUG, "\tslot: %s", pkgslot);
+										#endif
 										free(line);
 										free(slot);
 									}
@@ -195,7 +195,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 											pkgrepo = strdup(line);
 											remove_newline(pkgrepo);
 										}
+										#ifdef DEBUG
 										msg(LOG_DEBUG, "\trepo: %s", pkgrepo);
+										#endif
 										free(line);
 										free(repo);
 									}
@@ -277,7 +279,10 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							vdbpackages[i] = *package;
 							i++;
 
-							msg(LOG_DEBUG, "Package %s\n\tSlot %s\n\tRepo %s\n\tFiles %i", package->cpv, package->slot, package->repo, package->files);
+							#ifdef DEBUG
+							msg(LOG_DEBUG, "Package %s\n\tSlot %s\n\tRepo %s\n\tFiles %i",
+								package->cpv, package->slot, package->repo, package->files);
+							#endif
 							free(catpkgver);
 							free(pkgslot);
 							free(pkgrepo);
@@ -295,6 +300,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 		struct epkg *package = &vdbpackages[j];
 
 		// slot "0" is the default slot for packages that aren't slotted; we don't need to include it in the log
+		// TODO: Files listed here include paths we filter in add_file_to_backend_by_md5
 		if ((strcmp(package->slot,"0")) == 0) {
 			msg(LOG_INFO, "Adding %s:%s (::%s) to the ebuild backend; %i files", package->cpv, package->slot, package->repo, package->files);
 		} else {
