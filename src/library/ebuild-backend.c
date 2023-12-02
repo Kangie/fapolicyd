@@ -268,9 +268,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							// msg(LOG_DEBUG, "Files: %i", pkgfiles);
 							// add to pkgs array
 							struct epkg *package = malloc(sizeof(struct epkg));
-							package->cpv = catpkgver;
-							package->slot = pkgslot;
-							package->repo = pkgrepo;
+							package->cpv = strdup(catpkgver);
+							package->slot = strdup(pkgslot);
+							package->repo = strdup(pkgrepo);
 							package->files = pkgfiles;
 							package->content = pkgcontents;
 							vdbpackages = realloc(vdbpackages, sizeof(struct epkg) * (i + 1));
@@ -280,7 +280,6 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							msg(LOG_DEBUG, "Package %s\n\tSlot %s\n\tRepo %s\n\tFiles %i", package->cpv, package->slot, package->repo, package->files);
 							free(catpkgver);
 							free(package);
-							free(pkgcontents);
 						}
 					}
 				}
