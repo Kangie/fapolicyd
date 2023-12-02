@@ -35,9 +35,9 @@
  * crafted file so they do not secure this backend.
  */
 int add_file_to_backend_by_md5(const char *path,
-							struct _hash_record **hashtable,
 							const char *expected_md5,
-							trust_src_t *trust_src,
+							struct _hash_record **hashtable,
+							trust_src_t trust_src,
 							backend backend)
 {
 	struct stat path_stat;

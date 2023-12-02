@@ -68,7 +68,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 	DIR *vdbdir;
 	struct dirent *dp;
 
-	if (vdbdir = opendir("/var/db/pkg") == NULL) {
+	if ((vdbdir = opendir("/var/db/pkg")) == NULL) {
 		msg(LOG_ERR, "Could not open /var/db/pkg");
 		return 1;
 	}
@@ -94,7 +94,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 			if (catdir) {
 				DIR *cat;
 				struct dirent *catdp;
-				if (cat = opendir(catdir) == NULL) {
+				if ((cat = opendir(catdir)) == NULL) {
 					msg(LOG_ERR, "Could not open %s", catdir);
 					free(catdir);
 					continue;
@@ -114,7 +114,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							DIR *pkgver;
 							struct dirent *pkgverdp;
 
-							if (pkgver = opendir(pkgverdir) == NULL) {
+							if ((pkgver = opendir(pkgverdir)) == NULL) {
 								msg(LOG_ERR, "Could not open %s", pkgverdir);
 								free(pkgverdir);
 								continue;
@@ -122,7 +122,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 							while ((pkgverdp = readdir(pkgver)) != NULL) {
 
-								char *pkgcat, *pkgname, *pkgrepo, *pkgslot, *pkgver;
+								char *pkgrepo, *pkgslot;
 								ebuildfiles* pkgcontents = NULL;
 								int j = 0;
 
@@ -139,7 +139,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										char *line = NULL;
 										size_t len = 0;
 										ssize_t read;
-										if (fp = fopen(slot, "r") == NULL) {
+										if ((fp = fopen(slot, "r")) == NULL) {
 											msg(LOG_ERR, "Could not open %s", slot);
 											free(slot);
 											continue;
@@ -166,7 +166,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										char *line = NULL;
 										size_t len = 0;
 										ssize_t read;
-										if (fp = fopen(repo, "r") == NULL) {
+										if ((fp = fopen(repo, "r")) == NULL) {
 											msg(LOG_ERR, "Could not open %s", repo);
 											free(repo);
 											continue;
@@ -192,7 +192,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										char *line = NULL;
 										size_t len = 0;
 										ssize_t read;
-										if (fp = fopen(contents, "r") == NULL) {
+										if ((fp = fopen(contents, "r")) == NULL) {
 											msg(LOG_ERR, "Could not open %s", contents);
 											free(contents);
 											continue;
@@ -206,7 +206,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 											if (token) {
 												// we only care about files
-												if (token == "dir") {
+												if ((strcmp(token,"dir")) == 0) {
 													continue;
 												}
 
@@ -261,12 +261,12 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 	for (int j = 0; j < i; j++) {
 		struct epkg *pkg = &pkgs[j];
-		if (pkg->slot == "0") {
+		if ((strcmp(pkg->slot,"0")) == 0) {
 			msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
 		} else {
 			msg(LOG_INFO, "Computing hashes for %s (%s)", pkg->cpv, pkg->repo);
 		}
-		for (int k = 0; k < sizeof(pkg->content); k++) {
+		for (unsigned long k = 0; k < sizeof(pkg->content); k++) {
 			ebuildfiles *file = &pkg->content[k];
 			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
 		}
