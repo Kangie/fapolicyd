@@ -52,6 +52,15 @@ struct epkg {
 	ebuildfiles *content;
 };
 
+
+char* remove_newline(char* string) {
+    int len = strlen(string);
+    if (len > 0 && string[len-1] == '\n') {
+        string[len-1] = '\0';
+    }
+    return string;
+}
+
 /*
  * Portage stores data about installed packages in the VDB (/var/db/pkg/).
  * We care about /var/db/pkg/category/package-version/CONTENTS
@@ -155,8 +164,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										// SLOT will only ever contain a single line
 										if ((read = getline(&line, &len, fp)) != -1) {
 											pkgslot = strdup(line);
+											remove_newline(pkgslot);
 										}
-										msg(LOG_DEBUG, "slot: %s", pkgslot);
+										msg(LOG_DEBUG, "\tslot: %s", pkgslot);
 										free(line);
 										free(slot);
 									}
@@ -183,8 +193,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										// repository will only ever contain a single line
 										if ((read = getline(&line, &len, fp)) != -1) {
 											pkgrepo = strdup(line);
+											remove_newline(pkgrepo);
 										}
-										msg(LOG_DEBUG, "repo: %s", pkgrepo);
+										msg(LOG_DEBUG, "\trepo: %s", pkgrepo);
 										free(line);
 										free(repo);
 									}
@@ -251,10 +262,10 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							strcat(catpkgver, "/");
 							strcat(catpkgver, catdp->d_name);
 
-							msg(LOG_DEBUG, "Package: %s", catpkgver);
-							msg(LOG_DEBUG, "Slot: %s", pkgslot);
-							msg(LOG_DEBUG, "Repo: %s", pkgrepo);
-							msg(LOG_DEBUG, "Files: %i", pkgfiles);
+							// msg(LOG_DEBUG, "Package: %s", catpkgver);
+							// msg(LOG_DEBUG, "Slot: %s", pkgslot);
+							// msg(LOG_DEBUG, "Repo: %s", pkgrepo);
+							// msg(LOG_DEBUG, "Files: %i", pkgfiles);
 							// add to pkgs array
 							struct epkg *package = malloc(sizeof(struct epkg));
 							package->cpv = catpkgver;
