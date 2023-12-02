@@ -38,7 +38,7 @@ int add_file_to_backend_by_md5(const char *path,
 							const char *expected_md5,
 							struct _hash_record **hashtable,
 							trust_src_t trust_src,
-							backend backend)
+							backend *backend)
 {
 	struct stat path_stat;
 	// Open the file and check the md5 hash first.
@@ -112,7 +112,7 @@ int add_file_to_backend_by_md5(const char *path,
 			rcd = (struct _hash_record *)malloc(sizeof(struct _hash_record));
 			rcd->key = strdup(key);
 			HASH_ADD_KEYPTR(hh, *hashtable, rcd->key, strlen(rcd->key), rcd);
-			list_append(&backend.list, strdup(path), data);
+			list_append(&backend->list, strdup(path), data);
 		} else {
 			free((void *)data);
 		}

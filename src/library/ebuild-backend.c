@@ -232,7 +232,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							// We're not processing based on this information, but it's useful for logging
 							// If there's a need to split into components see
 							// https://github.com/gentoo/portage-utils/blob/master/libq/atom.c
-							char *catpkgver;
+							char *catpkgver = malloc(sizeof(catdp->d_name) + sizeof(pkgverdp->d_name) + 1);
 							strcpy(catdp->d_name, catpkgver);
 							strcat(catpkgver, "/");
 							strcat(catpkgver, pkgverdp->d_name);
@@ -262,13 +262,13 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 	for (int j = 0; j < i; j++) {
 		struct epkg *pkg = &pkgs[j];
 		if ((strcmp(pkg->slot,"0")) == 0) {
-			msg(LOG_INFO, "Computing hashes for %s:%s (%s)", pkg->cpv, pkg->slot, pkg->repo);
+			msg(LOG_INFO, "Computing hashes for %s:%s (::%s)", pkg->cpv, pkg->slot, pkg->repo);
 		} else {
-			msg(LOG_INFO, "Computing hashes for %s (%s)", pkg->cpv, pkg->repo);
+			msg(LOG_INFO, "Computing hashes for %s (::%s)", pkg->cpv, pkg->repo);
 		}
 		for (unsigned long k = 0; k < sizeof(pkg->content); k++) {
 			ebuildfiles *file = &pkg->content[k];
-			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, ebuild_backend);
+			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, &ebuild_backend);
 		}
 	}
 	free(pkgs);
