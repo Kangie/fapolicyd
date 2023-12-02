@@ -223,7 +223,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 											char *token;
 											char *saveptr;
 
-											token = strtok_r(line, " ", &saveptr); // obj/dir, /path/to/file, md5, datestamp
+											token = strtok_r(line, " ", &saveptr); // obj/dir/sym, /path/to/file, md5, datestamp
 
 											if (token) {
 												// we only care about files
@@ -289,17 +289,18 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 		}
 	}
 
-	msg(LOG_INFO, "Computing hashes for %d packages.", i);
+	msg(LOG_INFO, "Processed %d packages.", i);
 
 	for (int j = 0; j < i; j++) {
 		struct epkg *package = &vdbpackages[j];
 
+		// slot "0" is the default slot for packages that aren't slotted; we don't need to include it in the log
 		if ((strcmp(package->slot,"0")) == 0) {
-			msg(LOG_INFO, "Computing hashes for %s:%s (::%s)", package->cpv, package->slot, package->repo);
+			msg(LOG_INFO, "Adding %s:%s (::%s) to the ebuild backend; %i files", package->cpv, package->slot, package->repo, package->files);
 		} else {
-			msg(LOG_INFO, "Computing hashes for %s (::%s)", package->cpv, package->repo);
+			msg(LOG_INFO, "Adding %s (::%s) to the ebuild backend; %i files", package->cpv, 	package->repo, package->files);
 		}
-		for (unsigned long k = 0; k < sizeof(package->content); k++) {
+		for (unsigned long k = 0; k < package->files; k++) {
 			ebuildfiles *file = &package->content[k];
 			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, &ebuild_backend);
 		}
