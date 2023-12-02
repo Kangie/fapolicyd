@@ -227,7 +227,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 											if (token) {
 												// we only care about files
-												if ((strcmp(token,"dir")) == 0) {
+												if ((strcmp(token, "dir")) == 0 || (strcmp(token, "sym")) == 0) {
 													continue;
 												}
 
