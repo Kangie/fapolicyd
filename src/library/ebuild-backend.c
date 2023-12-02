@@ -48,6 +48,7 @@ struct epkg {
 	char *cpv;
 	char *slot;
 	char *repo;
+	int files;
 	ebuildfiles *content;
 };
 
@@ -66,14 +67,14 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 	struct _hash_record **hashtable_ptr = &hashtable;
 
 	DIR *vdbdir;
-	struct dirent *dp;
+	struct dirent *vdbdp;
 
 	if ((vdbdir = opendir("/var/db/pkg")) == NULL) {
 		msg(LOG_ERR, "Could not open /var/db/pkg");
 		return 1;
 	}
 
-	struct epkg *pkgs = NULL;
+	struct epkg *vdbpackages = NULL;
 	int i = 0;
 
 	/*
@@ -81,15 +82,17 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 	 * process CONTENTS (files, md5s), repository, SLOT,
 	 * store in epkg array
 	*/
-	while ((dp = readdir(vdbdir)) != NULL) {
+	while ((vdbdp = readdir(vdbdir)) != NULL) {
 
-		if (dp->d_type == DT_DIR && strcmp(dp->d_name, ".") != 0 &&
-				strcmp(dp->d_name, "..") != 0) {
+		if (vdbdp->d_type == DT_DIR && strcmp(vdbdp->d_name, ".") != 0 &&
+				strcmp(vdbdp->d_name, "..") != 0) {
 
 			char *catdir;
-			if (asprintf(&catdir, "/var/db/pkg/%s", dp->d_name) == -1) {
+			if (asprintf(&catdir, "/var/db/pkg/%s", vdbdp->d_name) == -1) {
 				catdir = NULL;
 			}
+
+			msg(LOG_DEBUG, "Loading category %s", vdbdp->d_name);
 
 			if (catdir) {
 				DIR *cat;
@@ -110,6 +113,13 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 							pkgverdir = NULL;
 						}
 
+						msg(LOG_DEBUG, "Loading package %s/%s", vdbdp->d_name, catdp->d_name);
+						char *pkgrepo = NULL;
+						char *pkgslot = NULL;
+						int pkgfiles = 0;
+						ebuildfiles* pkgcontents = NULL;
+
+
 						if (pkgverdir) {
 							DIR *pkgver;
 							struct dirent *pkgverdp;
@@ -122,9 +132,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 							while ((pkgverdp = readdir(pkgver)) != NULL) {
 
-								char *pkgrepo, *pkgslot;
-								ebuildfiles* pkgcontents = NULL;
-								int j = 0;
+								//msg(LOG_DEBUG, "Type: %s, Name %s", pkgverdp->d_type, pkgverdp->d_name);
 
 								// SLOT
 								if (pkgverdp->d_type == DT_REG &&
@@ -148,6 +156,7 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										if ((read = getline(&line, &len, fp)) != -1) {
 											pkgslot = strdup(line);
 										}
+										msg(LOG_DEBUG, "slot: %s", pkgslot);
 										free(line);
 										free(slot);
 									}
@@ -175,8 +184,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 										if ((read = getline(&line, &len, fp)) != -1) {
 											pkgrepo = strdup(line);
 										}
-											free(line);
-											free(repo);
+										msg(LOG_DEBUG, "repo: %s", pkgrepo);
+										free(line);
+										free(repo);
 									}
 								}
 								// CONTENTS
@@ -218,9 +228,9 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 
 												// we don't care about the datestamp
 
-												pkgcontents = realloc(pkgcontents, sizeof(ebuildfiles) * (j + 1));
-												pkgcontents[j] = *file;
-												j++;
+												pkgcontents = realloc(pkgcontents, sizeof(ebuildfiles) * (pkgfiles + 1));
+												pkgcontents[pkgfiles] = *file;
+												pkgfiles++;
 												free(file);
 											}
 
@@ -228,28 +238,38 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 									}
 								}
 
+							}
 							// Construct a CPV string from VDB path fragments e.g. dev-libs/libxml2-2.9.10{-r0}
 							// We're not processing based on this information, but it's useful for logging
 							// If there's a need to split into components see
 							// https://github.com/gentoo/portage-utils/blob/master/libq/atom.c
-							char *catpkgver = malloc(sizeof(catdp->d_name) + sizeof(pkgverdp->d_name) + 1);
-							strcpy(catdp->d_name, catpkgver);
+							char *catpkgver = malloc(strlen(vdbdp->d_name) + strlen(catdp->d_name) + 2);
+							if (catpkgver == NULL) {
+								// handle error
+							}
+							strcpy(catpkgver, vdbdp->d_name);
 							strcat(catpkgver, "/");
-							strcat(catpkgver, pkgverdp->d_name);
+							strcat(catpkgver, catdp->d_name);
 
+							msg(LOG_DEBUG, "Package: %s", catpkgver);
+							msg(LOG_DEBUG, "Slot: %s", pkgslot);
+							msg(LOG_DEBUG, "Repo: %s", pkgrepo);
+							msg(LOG_DEBUG, "Files: %i", pkgfiles);
 							// add to pkgs array
 							struct epkg *package = malloc(sizeof(struct epkg));
 							package->cpv = catpkgver;
 							package->slot = pkgslot;
 							package->repo = pkgrepo;
+							package->files = pkgfiles;
 							package->content = pkgcontents;
-							pkgs = realloc(pkgs, sizeof(struct epkg) * (i + 1));
-							pkgs[i] = *package;
+							vdbpackages = realloc(vdbpackages, sizeof(struct epkg) * (i + 1));
+							vdbpackages[i] = *package;
 							i++;
+
+							msg(LOG_DEBUG, "Package %s\n\tSlot %s\n\tRepo %s\n\tFiles %i", package->cpv, package->slot, package->repo, package->files);
 							free(catpkgver);
 							free(package);
 							free(pkgcontents);
-							}
 						}
 					}
 				}
@@ -260,18 +280,19 @@ static int ebuild_load_list(const conf_t *conf) { // TODO: implement conf_t
 	msg(LOG_INFO, "Computing hashes for %d packages.", i);
 
 	for (int j = 0; j < i; j++) {
-		struct epkg *pkg = &pkgs[j];
-		if ((strcmp(pkg->slot,"0")) == 0) {
-			msg(LOG_INFO, "Computing hashes for %s:%s (::%s)", pkg->cpv, pkg->slot, pkg->repo);
+		struct epkg *package = &vdbpackages[j];
+
+		if ((strcmp(package->slot,"0")) == 0) {
+			msg(LOG_INFO, "Computing hashes for %s:%s (::%s)", package->cpv, package->slot, package->repo);
 		} else {
-			msg(LOG_INFO, "Computing hashes for %s (::%s)", pkg->cpv, pkg->repo);
+			msg(LOG_INFO, "Computing hashes for %s (::%s)", package->cpv, package->repo);
 		}
-		for (unsigned long k = 0; k < sizeof(pkg->content); k++) {
-			ebuildfiles *file = &pkg->content[k];
+		for (unsigned long k = 0; k < sizeof(package->content); k++) {
+			ebuildfiles *file = &package->content[k];
 			add_file_to_backend_by_md5(file->path, file->md5, hashtable_ptr, SRC_EBUILD, &ebuild_backend);
 		}
 	}
-	free(pkgs);
+	free(vdbpackages);
 	return 0;
 }
 
