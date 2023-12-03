@@ -188,7 +188,7 @@ AC_CHECK_LIB(lmdb, mdb_env_create, , [AC_MSG_ERROR([liblmdb not found])], -llmdb
 
 LD_SO_PATH
 
-AC_CONFIG_FILES([Makefile src/Makefile src/tests/Makefile init/Makefile doc/Makefile rules.d/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/tests/Makefile extra/Makefile doc/Makefile rules.d/Makefile])
 AC_OUTPUT
 
 echo .
