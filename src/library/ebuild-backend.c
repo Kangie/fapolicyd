@@ -227,7 +227,8 @@ void process_pkgdir(int *packages, struct epkg **vdbpackages, PackageData **data
 	msg(LOG_DEBUG, "Package number %i", *packages + 1);
 	#endif
 
-	// add it to the array
+
+	// allocate memory for the new package
 	struct epkg **temp = realloc(*vdbpackages, sizeof(struct epkg*) * (*packages + 1));
 	if(temp == NULL) {
 		msg(LOG_ERR, "Could not allocate memory.");
@@ -235,6 +236,7 @@ void process_pkgdir(int *packages, struct epkg **vdbpackages, PackageData **data
 	} else {
 		*vdbpackages = *temp;
 	}
+	// Add the new package to the array
 	(*vdbpackages)[*packages] = *package;
 	(*packages)++;
 
