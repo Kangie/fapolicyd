@@ -225,31 +225,25 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 	package->files = pkgfiles;
 	package->content = pkgcontents;
 
+	free(catpkgver);
+	free(pkgslot);
+	free(pkgrepo);
+
 	#ifdef DEBUG
 	msg(LOG_DEBUG, "Stored:\n\tPackage: %s\n\tSlot: %s\n\tRepo: %s\n\tFiles: %i",
 		package->cpv, package->slot, package->repo, package->files);
 	msg(LOG_DEBUG, "Package number %i", *packages + 1);
 	#endif
 
-	// add it to the array
-	#ifdef DEBUG
-	msg(LOG_DEBUG, "vdbpackages: %p", vdbpackages);
-	msg(LOG_DEBUG, "packages: %p", packages);
-	#endif
 	struct epkg** expanded_vdbpackages = reallocarray(vdbpackages, sizeof(struct epkg), (*packages + 1));
 	if(expanded_vdbpackages == NULL) {
 		msg(LOG_ERR, "Could not allocate memory.");
 		abort();
 	}
 	vdbpackages = expanded_vdbpackages;
-
 	(vdbpackages)[*packages] = package;
 	(*packages)++;
 
-	free(catpkgver);
-	free(pkgslot);
-	free(pkgrepo);
-	free(package);
 	return vdbpackages;
 }
 
@@ -347,6 +341,7 @@ struct epkg** process_vdb_category(struct dirent *vdbdp, int *packages, struct e
 		}
 
 		vdbpackages = process_directory(category, process_vdb_package, packages, vdbpackages, data);
+
 		closedir(category);
 		free(catdir);
 	}
@@ -360,8 +355,8 @@ struct epkg** process_vdb_category(struct dirent *vdbdp, int *packages, struct e
  */
 int exclude_path(const char *path) {
 	const char *excluded_paths[] = {
-	"/usr/share/",
-	"/usr/src/",
+		"/usr/share/",
+		"/usr/src/",
 	};
 	const int num_excluded_paths = sizeof(excluded_paths) / sizeof(excluded_paths[0]);
 	for (int i = 0; i < num_excluded_paths; i++) {
@@ -407,7 +402,7 @@ static int ebuild_load_list(const conf_t *conf) {
 	PackageData *data = malloc(sizeof(PackageData));
 	data->category = NULL;
 	data->package = NULL;
-	process_directory(vdbdir, process_vdb_category, &packages, vdbpackages, &data);
+	vdbpackages = process_directory(vdbdir, process_vdb_category, &packages, vdbpackages, &data);
 	free(data);
 	closedir(vdbdir);
 
@@ -417,7 +412,6 @@ static int ebuild_load_list(const conf_t *conf) {
 		struct epkg *package = vdbpackages[j];
 
 		// slot "0" is the default slot for packages that aren't slotted; we don't need to include it in the log
-		// TODO: Files listed here include paths we filter in add_file_to_backend_by_md5
 		if ((strcmp(package->slot,"0")) == 0) {
 			msg(LOG_INFO, "Adding %s:%s (::%s) to the ebuild backend; %i files",
 				package->cpv, package->slot, package->repo, package->files);
@@ -427,7 +421,6 @@ static int ebuild_load_list(const conf_t *conf) {
 		}
 		for (int k = 0; k < package->files; k++) {
 			ebuildfiles *file = &package->content[k];
-			// skip files in excluded paths
 			if (exclude_path(file->path)) {
 				continue;
 			}
@@ -437,6 +430,7 @@ static int ebuild_load_list(const conf_t *conf) {
 	}
 	free(vdbpackages);
 	return 0;
+
 }
 
 static int ebuild_init_backend(void)
