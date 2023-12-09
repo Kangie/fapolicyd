@@ -29,7 +29,7 @@
 
 /* The message mode refers to where informational messages go
    0 - stderr, 1 - syslog, 2 - quiet. The default is quiet. */
-static message_t message_mode = MSG_QUIET;
+static message_t message_mode = 0;
 static debug_message_t debug_message = DBG_NO;
 
 void set_message_mode(message_t mode, debug_message_t debug)
@@ -42,11 +42,7 @@ void msg(int priority, const char *fmt, ...)
 {
         va_list   ap;
 
-	if (message_mode == MSG_QUIET)
-		return;
 
-	if (priority == LOG_DEBUG && debug_message == DBG_NO)
-		return;
 
         va_start(ap, fmt);
         if (message_mode == MSG_SYSLOG)
