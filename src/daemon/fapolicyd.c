@@ -355,8 +355,17 @@ static void handle_mounts(int fd)
 		// Get a line
 		if (rc > 0) {
 			// Parse it
+			#ifdef DEBUG
+			msg(LOG_DEBUG, "mounts: %s", buf);
+			#endif
 			sscanf(buf, "%1024s %4096s %31s %127s %d %d\n",
 			    device, point, type, mntops, &fs_req, &fs_passno);
+			#ifdef DEBUG
+			msg(LOG_DEBUG, "device: %s", device);
+			msg(LOG_DEBUG, "device_addr: %p", &device);
+			msg(LOG_DEBUG, "mount point: %s", point);
+			msg(LOG_DEBUG, "point_addr: %p", &point);
+			#endif
 			unescape_shell(device, strlen(device));
 			unescape_shell(point, strlen(point));
 			// Is this one that we care about?

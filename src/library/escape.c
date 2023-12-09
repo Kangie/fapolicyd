@@ -22,12 +22,13 @@
  *   Radovan Sroka <rsroka@redhat.com>
  */
 
-#include "escape.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
+#include "config.h"
+#include "escape.h"
 #include "message.h"
 
 static const char sh_set[] = "\"'`$\\!()| ";
@@ -91,43 +92,57 @@ char *escape_shell(const char *input, const size_t expected_size)
 	return escape_buffer;
 }
 
-#define isoctal(a) (((a) & ~7) == '0')
-void unescape_shell(char *s, const size_t len)
-{
-	size_t sz = 0;
-	char *buf = s;
+	#define isoctal(a) (((a) & ~7) == '0')
+	void unescape_shell(char *s, const size_t len)
+	{
+		size_t sz = 0;
+		char *buf = s;
 
-	while (*s) {
-		if (*s == '\\' && sz + 3 < len && isoctal(s[1]) &&
-		    isoctal(s[2]) && isoctal(s[3])) {
+		#ifdef DEBUG
+		msg(LOG_DEBUG, "Unescaping shell sequence: %s", s);
+		msg(LOG_DEBUG, "Shell sequence length: %zu", len);
+		msg(LOG_DEBUG, "Shell sequence len: %zu", strlen(s));
+		#endif
 
-			*buf++ = 64*(s[1] & 7) + 8*(s[2] & 7) + (s[3] & 7);
-			s += 4;
-			sz += 4;
-		} else if (*s == '\\' && sz + 2 < len) {
-			*buf++ = s[1];
-			s += 2;
-			sz += 2;
-		} else {
-			*buf++ = *s++;
-			sz++;
+		while (*s) {
+			#ifdef DEBUG
+			msg(LOG_DEBUG, "Processing char: %c", *s);
+			msg(LOG_DEBUG, "Processing index: %zu", sz);
+			#endif
+			// "\000"
+			if (*s == '\\' && sz + 3 < len && isoctal(s[1]) &&
+				isoctal(s[2]) && isoctal(s[3])) {
+				// Turn octal into decimal and advance by 4 chars
+				*buf++ = 64*(s[1] & 7) + 8*(s[2] & 7) + (s[3] & 7);
+				s += 4;
+				sz += 4;
+			} else if (*s == '\\' && sz + 2 < len) {
+				// strip \ and copy character to buffer
+				*buf++ = s[1];
+				s += 2;
+				sz += 2;
+			} else {
+				*buf++ = *s++;
+				sz++;
+			}
+			msg(LOG_DEBUG, "buf: %s", buf);
+			msg(LOG_DEBUG, "s: %s", s);
 		}
+		*buf = '\0';
 	}
-	*buf = '\0';
-}
 
-#define IS_HEX(X) (isxdigit(X) > 0 && !(islower(X) > 0))
+	#define IS_HEX(X) (isxdigit(X) > 0 && !(islower(X) > 0))
 
-static char asciiHex2Bits(char X)
-{
-	char base = 0;
-	if (X >= '0' && X <= '9') {
-		base = '0';
-	} else if (X >= 'A' && X <= 'F') {
-		base = 'A' - 10;
-  }
-	return (X - base) & 0X00FF;
-}
+	static char asciiHex2Bits(char X)
+	{
+		char base = 0;
+		if (X >= '0' && X <= '9') {
+			base = '0';
+		} else if (X >= 'A' && X <= 'F') {
+			base = 'A' - 10;
+	}
+		return (X - base) & 0X00FF;
+	}
 
 // unescape old format of a trust file
 // it makes code backwards compatible
