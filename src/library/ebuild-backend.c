@@ -213,15 +213,12 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 	// We're not processing based on this information, but it's useful for logging
 	// If there's a need to split into components see
 	// https://github.com/gentoo/portage-utils/blob/master/libq/atom.c
-	char *catpkgver = malloc(strlen((*data)->category) + strlen((*data)->package) + 2);
-	if (catpkgver == NULL) {
+	char *catpkgver;
+	if (asprintf(&catpkgver, "%s/%s", (*data)->category, (*data)->package) < 0) {
 		msg(LOG_ERR, "Could not allocate memory.");
-		perror("malloc");
+		perror("asprintf");
 		return vdbpackages;
 	}
-	strcpy(catpkgver, (*data)->category);
-	strcat(catpkgver, "/");
-	strcat(catpkgver, (*data)->package);
 
 	// make a new package
 	struct epkg *package = malloc(sizeof(struct epkg));
