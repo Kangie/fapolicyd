@@ -27,6 +27,12 @@
 #include "md5-backend.h"		// for add_file_to_backend_by_md5
 #include "message.h"			// for msg
 
+#ifdef DEBUG
+#define DEBUG_MSG(fmt, ...) do { msg(LOG_DEBUG, fmt, ##__VA_ARGS__); } while(0)
+#else
+#define DEBUG_MSG(fmt, ...)
+#endif
+
 static const char kEbuildBackend[] = "ebuilddb";
 
 static int ebuild_init_backend(void);
@@ -135,9 +141,7 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 
 
 	for (int i = 0; i < nfilenames; i++) {
-		#ifdef DEBUG
-		msg(LOG_DEBUG, "\tProcessing %s", filenames[i]);
-		#endif
+		DEBUG_MSG("\tProcessing %s", filenames[i]);
 		char *filepath;
 		if (asprintf(&filepath, "/var/db/pkg/%s/%s/%s", (*data)->category, (*data)->package, filenames[i]) == -1) {
 			perror("asprintf");
@@ -160,15 +164,11 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 					if (strcmp(filenames[i], "SLOT") == 0) {
 						pkgslot = strdup(line);
 						remove_newline(pkgslot);
-						#ifdef DEBUG
-						msg(LOG_DEBUG, "\t\tslot: %s", pkgslot);
-						#endif
+						DEBUG_MSG("\t\tslot: %s", pkgslot);
 					} else if (strcmp(filenames[i], "repository") == 0) {
 						pkgrepo = strdup(line);
 						remove_newline(pkgrepo);
-						#ifdef DEBUG
-						msg(LOG_DEBUG, "\t\trepo: %s", pkgrepo);
-						#endif
+						DEBUG_MSG("\t\trepo: %s", pkgrepo);
 					}
 				}
 			} else if (strcmp(filenames[i], "CONTENTS") == 0) {
@@ -200,9 +200,7 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 						free(file);
 					}
 				}
-				#ifdef DEBUG
-				msg(LOG_DEBUG, "\t\tfiles: %i", pkgfiles);
-				#endif
+				DEBUG_MSG("\t\tfiles: %i", pkgfiles);
 			}
 
 			fclose(fp);
@@ -237,14 +235,12 @@ struct epkg** process_pkgdir(int *packages, struct epkg **vdbpackages, PackageDa
 	free(pkgslot);
 	free(pkgrepo);
 
-	#ifdef DEBUG
-	msg(LOG_DEBUG, "Stored:");
-	msg(LOG_DEBUG, "\tPackage number %i", *packages + 1);
-	msg(LOG_DEBUG, "\tPackage: %s", package->cpv);
-	msg(LOG_DEBUG, "\tSlot: %s", package->slot);
-	msg(LOG_DEBUG, "\tRepo: %s", package->repo);
-	msg(LOG_DEBUG, "\tFiles: %i", package->files);
-	#endif
+	DEBUG_MSG("Stored:");
+	DEBUG_MSG("\tPackage number %i", *packages + 1);
+	DEBUG_MSG("\tPackage: %s", package->cpv);
+	DEBUG_MSG("\tSlot: %s", package->slot);
+	DEBUG_MSG("\tRepo: %s", package->repo);
+	DEBUG_MSG("\tFiles: %i", package->files);
 
 	struct epkg** expanded_vdbpackages = reallocarray(vdbpackages, sizeof(struct epkg), (*packages + 1));
 	if(expanded_vdbpackages == NULL) {
@@ -281,9 +277,7 @@ struct epkg** process_vdb_package(struct dirent *pkgdp, int *packages, struct ep
 	}
 
 	msg(LOG_INFO, "Loading package %s/%s", (*data)->category, pkgdp->d_name);
-	#ifdef DEBUG
-	msg(LOG_DEBUG, "\tPath: %s", pkgpath);
-	#endif
+	DEBUG_MSG("\tPath: %s", pkgpath);
 
 	if((*data)->package != NULL) {
 		free((*data)->package);
@@ -402,7 +396,7 @@ static int ebuild_load_list(const conf_t *conf) {
 	int packages = 0;
 
 	msg(LOG_INFO, "Initialising ebuild backend");
-	msg(LOG_DEBUG, "Processing VDB");
+	DEBUG_MSG("Processing VDB");
 
 	/*
 	 * recurse through category/package-version/ dirs,
